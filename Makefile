@@ -4,6 +4,7 @@ P 	= nvtegraparts
 OBJS	= $(P).o
 LIBS	=
 
+# CROSS_COMPILE=arm-linux-gnueabi-hf-
 CC	= $(CROSS_COMPILE)gcc
 INSTALL	= install
 

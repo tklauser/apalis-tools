@@ -9,8 +9,8 @@ Print partitioning information for the PT image on the internal eMMC flash. Base
 
 Directly on the Apalis:
 
-    $ nvtegraparts /dev/mmcblk0boot1 
+    $ nvtegraparts /dev/mmcblk0boot1
 
-On an image file:
-  
-    $ nvtegraparts mmc.img
+On an image file (e.g. created with `dd if=/dev/mmcblk0boot1 of=mmcblk0boot1.img bs=4096 count=1`):
+
+    $ nvtegraparts mmcblk0boot1.img
