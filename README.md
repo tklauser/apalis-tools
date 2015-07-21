@@ -14,3 +14,13 @@ Directly on the Apalis:
 On an image file (e.g. created with `dd if=/dev/mmcblk0boot1 of=mmcblk0boot1.img bs=4096 count=1`):
 
     $ nvtegraparts mmcblk0boot1.img
+
+## trdx-configblock
+
+Read/write Toradex configuration block from eMMC flash. Based on u-boot code from http://git.toradex.com/cgit/u-boot-toradex.git
+
+### Usage
+
+Directly on the Apalis:
+
+    $ trdx-configblock /dev/mmcblk0
