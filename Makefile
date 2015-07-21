@@ -1,8 +1,6 @@
 # Copyright (C) 2014-2015 Tobias Klauser <tklauser@distanz.ch>
 
-P 	= nvtegraparts
-OBJS	= $(P).o
-LIBS	=
+TOOLS 	= nvtegraparts trdx-configblock
 
 # CROSS_COMPILE=arm-linux-gnueabi-hf-
 CC	= $(CROSS_COMPILE)gcc
@@ -25,10 +23,18 @@ BINDIR	= $(prefix)/bin
 SBINDIR	= $(prefix)/sbin
 DESTDIR	=
 
-all: $(P)
+all: $(TOOLS)
 
-$(P): $(OBJS)
-	$(LDQ) $(LDFLAGS) -o $@ $(OBJS) $(LIBS)
+define TOOL_templ
+$(1): $(1).o
+	$$(LDQ) $$(LDFLAGS) -o $$@ $$<
+$(1)_install: $(P)
+	@echo "  INSTALL $(1)"
+	@$(INSTALL) -d -m 755 $(DESTDIR)$(BINDIR)
+	@$(INSTALL) -m 755 $(1) $(BINDIR)/$(1)
+endef
+
+$(foreach tool,$(TOOLS),$(eval $(call TOOL_templ,$(tool))))
 
 %.o: %.c %.h
 	$(CCQ) $(CFLAGS) -o $@ -c $<
@@ -36,10 +42,7 @@ $(P): $(OBJS)
 %.o: %.c
 	$(CCQ) $(CFLAGS) -o $@ -c $<
 
-install: $(P)
-	@echo "  INSTALL $(P)"
-	@$(INSTALL) -d -m 755 $(DESTDIR)$(BINDIR)
-	@$(INSTALL) -m 755 $(P) $(BINDIR)/$(P)
+install: $(foreach tool,$(TOOLS),$(tool)_install)
 
 clean:
 	@echo "  CLEAN"
