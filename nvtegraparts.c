@@ -417,7 +417,7 @@ int main(int argc, char **argv)
 			goto err_free;
 		}
 
-		crc_self = gpt_h->crc_self;
+		crc_self = le32toh(gpt_h->crc_self);
 		gpt_h->crc_self = 0;
 		crc = crc32(gpt_h, le32toh(gpt_h->size));
 		if (crc != crc_self) {
@@ -457,6 +457,13 @@ int main(int argc, char **argv)
 		}
 
 		close(fd);
+
+		crc_self = le32toh(gpt_h->crc_table);
+		crc = crc32(gpt_buf, gpt_size);
+		if (crc != crc_self) {
+			err("Invalid GPT table CRC 0x%04x, calculated 0x%04x\n", crc_self, crc);
+			goto err_free;
+		}
 
 		if (verbose) {
 			printf("\nGPT header dump:\n");
