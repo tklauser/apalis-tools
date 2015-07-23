@@ -136,7 +136,7 @@ static void usage_and_exit(int ret)
 	       "\n"
 	       "Options:\n"
 	       "  -v, --verbose  Verbose mode (show hexdump of partition tables)\n"
-	       "  -h, --help     Show this mesage and exit\n");
+	       "  -h, --help     Show this message and exit\n");
 	exit(ret);
 }
 
@@ -426,6 +426,9 @@ int main(int argc, char **argv)
 			goto err_free;
 		}
 
+		if (verbose)
+			printf("Valid GPT header found at 0x%" PRIx64 "\n", ofs);
+
 		if (ioctl(fd, BLKSSZGET, &sector_size) != 0) {
 			printf("Failed to get block size, assuming default value 512\n");
 			sector_size = 512;
@@ -470,7 +473,7 @@ int main(int argc, char **argv)
 			hexdump(gpt_block, len);
 		}
 
-		printf("\nGUID partition table (%u partitions, size=%zu, sector 0x%" PRIx64 ", offset 0x%" PRIx64 ")\n",
+		printf("\nGUID partition table (%u partitions, size=%zu, sector=0x%" PRIx64 ", offset=0x%" PRIx64 ")\n",
 		       num_entries, gpt_size, le64toh(gpt_h->lba_table), ofs);
 
 		for (i = 0; i < num_entries; i++) {
