@@ -194,7 +194,7 @@ int main(int argc, char **argv)
 
 	printf("Model:  Toradex %s V%d.%d%c\n", toradex_modules[hw.prodid],
 	       hw.ver_major, hw.ver_minor, (char)hw.ver_assembly + 'A');
-	printf("Serial: %08x\n", serial);
+	printf("Serial: %08d\n", serial);
 	printf("MAC:    %02x:%02x:%02x:%02x:%02x:%02x\n",
 	       (uint8_t)((eth_addr.oui & 0x0000ff) >> 0),
 	       (uint8_t)((eth_addr.oui & 0x00ff00) >> 8),
