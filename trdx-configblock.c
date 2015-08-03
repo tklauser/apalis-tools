@@ -56,6 +56,7 @@ struct toradex_eth_addr {
 } __packed;
 
 static const char* const toradex_modules[] = {
+	 [0] = "invalid",
 	 [1] = "Colibri PXA270 312MHz",
 	 [2] = "Colibri PXA270 520MHz",
 	 [3] = "Colibri PXA320 806MHz",
