@@ -10,6 +10,7 @@
  * License: GNU General Public License, version 2
  */
 
+#define _LARGEFILE64_SOURCE
 #include <errno.h>
 #include <fcntl.h>
 #include <getopt.h>
@@ -100,8 +101,10 @@ static void usage_and_exit(int ret)
 	printf("Usage: trdx-configblock [OPTIONS...] [BLOCKDEV]\n"
 	       "\n"
 	       "Options:\n"
-	       "  -s N, --skip N  Set ARG partition offset to N sectors (default: %x)\n"
-	       "  -h, --help      Show this mesage and exit\n", DEFAULT_ARG_PART_OFF);
+	       "  -s N[s|b], --skip N[s|b]  Set partition offset to N sectors/bytes (default: 0x%xs)\n"
+	       "  -h, --help                Show this mesage and exit\n",
+	       DEFAULT_ARG_PART_OFF
+	       );
 	exit(ret);
 }
 
@@ -116,12 +119,20 @@ int main(int argc, char **argv)
 	struct toradex_hw hw;
 	struct toradex_eth_addr eth_addr;
 	uint32_t serial = 0;
+	enum {
+		UNIT_SECTORS,
+		UNIT_BYTES,
+	} units = UNIT_SECTORS;
 
 	while ((c = getopt_long(argc, argv, short_opts, long_opts, NULL)) != -1) {
 		switch (c) {
 		case 's':
+			if (optarg[strlen(optarg) - 1] == 'b')
+				units = UNIT_BYTES;
+			else if (optarg[strlen(optarg) - 1] == 's')
+				units = UNIT_SECTORS;
 			skip = (off_t) strtol(optarg, NULL, 0);
-			continue;
+			break;
 		case 'h':
 			usage_and_exit(EXIT_SUCCESS);
 		default:
@@ -138,9 +149,11 @@ int main(int argc, char **argv)
 		return -1;
 	}
 
-	skip *= DEFAULT_SECTOR_SIZE;
-	if (lseek(fd, skip, SEEK_SET) != skip) {
-		err("Failed to seek to offset 0x%jx: %s\n", (intmax_t) skip, strerror(errno));
+	if (units == UNIT_SECTORS)
+		skip *= DEFAULT_SECTOR_SIZE;
+	printf("Seeking to offset %lld %s\n", (unsigned long long)skip, (units == UNIT_SECTORS ? "sectors" : "bytes"));
+	if (lseek64(fd, skip, skip < 0 ? SEEK_END : SEEK_SET) == -1) {
+		err("Failed to seek to offset %jd: %s\n", (intmax_t) skip, strerror(errno));
 		goto out;
 	}
 
