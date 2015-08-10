@@ -102,7 +102,7 @@ static void usage_and_exit(int ret)
 	       "\n"
 	       "Options:\n"
 	       "  -s N[s|b], --skip N[s|b]  Set partition offset to N sectors/bytes (default: 0x%xs)\n"
-	       "  -h, --help                Show this mesage and exit\n",
+	       "  -h, --help                Show this message and exit\n",
 	       DEFAULT_ARG_PART_OFF
 	       );
 	exit(ret);
