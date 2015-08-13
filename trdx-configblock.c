@@ -25,13 +25,17 @@
 
 #define __packed		__attribute__((packed))
 
+#define ARRAY_SIZE(a)		(sizeof(a) / sizeof(a[0]))
+
 #define err(fmt, args...)	fprintf(stderr, "Error: " fmt, ##args)
 #define warn(fmt, args...)	fprintf(stderr, "Warning: " fmt, ##args)
 
-#define TRDX_CFG_BLOCK_MAX_SIZE 512
-/* Default offset of the 'ARG' partition */
+#define TRDX_CFG_BLOCK_MAX_SIZE	512
+/* Default offset of the 'ARG' partition (for pre v2.3 BSP releases) */
 #define DEFAULT_ARG_PART_OFF	0x00000c00
 #define DEFAULT_SECTOR_SIZE	4096
+/* Config block offset inside the 1st eMMC boot area partition (>= BSP v2.3) */
+#define DEFAULT_EMMC_BOOT_OFF	(-512)
 
 struct toradex_tag {
 	uint16_t	len:14;
@@ -101,47 +105,23 @@ static void usage_and_exit(int ret)
 	printf("Usage: trdx-configblock [OPTIONS...] [BLOCKDEV]\n"
 	       "\n"
 	       "Options:\n"
-	       "  -s N[s|b], --skip N[s|b]  Set partition offset to N sectors/bytes (default: 0x%xs)\n"
-	       "  -h, --help                Show this message and exit\n",
-	       DEFAULT_ARG_PART_OFF
-	       );
+	       "  -s N[s|b], --skip N[s|b]  Set partition offset to N sectors/bytes\n"
+	       "  -h, --help                Show this message and exit\n"
+	       "\n"
+	       "If BLOCKDEV is omitted, the default locations (according to the BSP release) are searched.\n");
 	exit(ret);
 }
 
-int main(int argc, char **argv)
+static int read_config_block(const char *devfile, off_t skip)
 {
-	int c, fd, ret = -1;
+	int fd, ret = -1;
 	size_t read_size, len;
-	off_t skip = DEFAULT_ARG_PART_OFF, tag_off = 0;
-	char *devfile = "/dev/mmcblk0";
+	off_t tag_off = 0, pos;
 	uint8_t *config_block = NULL;
+	uint32_t serial = 0;
 	struct toradex_tag *tag;
 	struct toradex_hw hw;
 	struct toradex_eth_addr eth_addr;
-	uint32_t serial = 0;
-	enum {
-		UNIT_SECTORS,
-		UNIT_BYTES,
-	} units = UNIT_SECTORS;
-
-	while ((c = getopt_long(argc, argv, short_opts, long_opts, NULL)) != -1) {
-		switch (c) {
-		case 's':
-			if (optarg[strlen(optarg) - 1] == 'b')
-				units = UNIT_BYTES;
-			else if (optarg[strlen(optarg) - 1] == 's')
-				units = UNIT_SECTORS;
-			skip = (off_t) strtol(optarg, NULL, 0);
-			break;
-		case 'h':
-			usage_and_exit(EXIT_SUCCESS);
-		default:
-			usage_and_exit(EXIT_FAILURE);
-		}
-	}
-
-	if (optind < argc)
-		devfile = argv[optind];
 
 	fd = open(devfile, O_RDONLY);
 	if (fd < 0) {
@@ -149,10 +129,7 @@ int main(int argc, char **argv)
 		return -1;
 	}
 
-	if (units == UNIT_SECTORS)
-		skip *= DEFAULT_SECTOR_SIZE;
-	printf("Seeking to offset %lld %s\n", (unsigned long long)skip, (units == UNIT_SECTORS ? "sectors" : "bytes"));
-	if (lseek64(fd, skip, skip < 0 ? SEEK_END : SEEK_SET) == -1) {
+	if ((pos = lseek64(fd, skip, skip < 0 ? SEEK_END : SEEK_SET)) == -1) {
 		err("Failed to seek to offset %jd: %s\n", (intmax_t) skip, strerror(errno));
 		goto out;
 	}
@@ -175,10 +152,15 @@ int main(int argc, char **argv)
 
 	tag = (struct toradex_tag *) config_block;
 	if (tag->flags != TAG_FLAG_VALID && tag->id != TAG_VALID) {
-		warn("Invalid Toradex config block present\n");
+		warn("No valid Toradex config block found on %s at 0x%08jx\n",
+		     devfile, (intmax_t) pos);
 		goto out;
 	}
 	tag_off = 4;
+
+	printf("Toradex config block found on %s at 0x%08jx\n", devfile,
+               (intmax_t) pos);
+
 
 	memset(&hw, 0, sizeof(hw));
 	memset(&eth_addr, 0, sizeof(eth_addr));
@@ -220,5 +202,55 @@ int main(int argc, char **argv)
 out:
 	free(config_block);
 	close(fd);
+	return ret;
+}
+
+int main(int argc, char **argv)
+{
+	int c, ret;
+	off_t skip = DEFAULT_ARG_PART_OFF;
+	bool skip_set = false;
+	char *devfile = NULL;
+	enum {
+		UNIT_SECTORS,
+		UNIT_BYTES,
+	} units = UNIT_SECTORS;
+
+	if (argc == 1) {
+	}
+
+	/* If arguments are given, use the specified device/offset */
+	while ((c = getopt_long(argc, argv, short_opts, long_opts, NULL)) != -1) {
+		switch (c) {
+		case 's':
+			if (optarg[strlen(optarg) - 1] == 'b')
+				units = UNIT_BYTES;
+			else if (optarg[strlen(optarg) - 1] == 's')
+				units = UNIT_SECTORS;
+			skip = (off64_t) strtoll(optarg, NULL, 0);
+			skip_set = true;
+			break;
+		case 'h':
+			usage_and_exit(EXIT_SUCCESS);
+		default:
+			usage_and_exit(EXIT_FAILURE);
+		}
+	}
+
+	if (optind < argc)
+		devfile = argv[optind];
+
+	if (units == UNIT_SECTORS)
+		skip *= DEFAULT_SECTOR_SIZE;
+
+	if (!devfile) {
+		/* Toradex BSP >= 2.3 stores the config block in the last sector
+		 * of the first boot partition */
+		ret = read_config_block("/dev/mmcblk0boot0", skip_set ? skip : DEFAULT_EMMC_BOOT_OFF);
+		if (ret != 0)
+			ret = read_config_block("/dev/mmcblk0", skip_set ? skip : (DEFAULT_ARG_PART_OFF * DEFAULT_SECTOR_SIZE));
+	} else
+		ret = read_config_block(devfile, skip);
+
 	return ret;
 }
