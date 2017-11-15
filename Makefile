@@ -32,6 +32,9 @@ $(1)_install: $(P)
 	@echo "  INSTALL $(1)"
 	@$(INSTALL) -d -m 755 $(DESTDIR)$(BINDIR)
 	@$(INSTALL) -m 755 $(1) $(BINDIR)/$(1)
+$(1)_clean:
+	@echo "  CLEAN $(1)"
+	@rm -f $(1).o $(1)
 endef
 
 $(foreach tool,$(TOOLS),$(eval $(call TOOL_templ,$(tool))))
@@ -44,6 +47,4 @@ $(foreach tool,$(TOOLS),$(eval $(call TOOL_templ,$(tool))))
 
 install: $(foreach tool,$(TOOLS),$(tool)_install)
 
-clean:
-	@echo "  CLEAN"
-	@rm -f $(OBJS) $(P)
+clean: $(foreach tool,$(TOOLS),$(tool)_clean)
