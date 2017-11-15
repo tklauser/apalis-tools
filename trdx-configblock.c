@@ -144,7 +144,7 @@ static int read_config_block(const char *devfile, off_t skip)
 	read_size = TRDX_CFG_BLOCK_MAX_SIZE;
 	len = read(fd, config_block, read_size);
 	if (len < read_size) {
-		err("Failed to read %u bytes from file: %s\n", read_size, strerror(errno));
+		err("Failed to read %zu bytes from file: %s\n", read_size, strerror(errno));
 		goto out;
 	}
 
