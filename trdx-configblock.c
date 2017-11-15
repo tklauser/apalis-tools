@@ -129,7 +129,8 @@ static int read_config_block(const char *devfile, off_t skip)
 		return -1;
 	}
 
-	if ((pos = lseek64(fd, skip, skip < 0 ? SEEK_END : SEEK_SET)) == -1) {
+	pos = lseek64(fd, skip, skip < 0 ? SEEK_END : SEEK_SET);
+	if (pos == -1) {
 		err("Failed to seek to offset %jd: %s\n", (intmax_t) skip, strerror(errno));
 		goto out;
 	}
@@ -143,6 +144,7 @@ static int read_config_block(const char *devfile, off_t skip)
 	/* TODO: NAND flash size is different, try to detect which one it is */
 	read_size = TRDX_CFG_BLOCK_MAX_SIZE;
 	len = read(fd, config_block, read_size);
+	close(fd);
 	if (len < read_size) {
 		err("Failed to read %zu bytes from file: %s\n", read_size, strerror(errno));
 		goto out;
@@ -160,7 +162,6 @@ static int read_config_block(const char *devfile, off_t skip)
 
 	printf("Toradex config block found on %s at 0x%08jx\n", devfile,
                (intmax_t) pos);
-
 
 	memset(&hw, 0, sizeof(hw));
 	memset(&eth_addr, 0, sizeof(eth_addr));
@@ -201,7 +202,6 @@ static int read_config_block(const char *devfile, off_t skip)
 
 out:
 	free(config_block);
-	close(fd);
 	return ret;
 }
 
