@@ -230,9 +230,6 @@ int main(int argc, char **argv)
 		UNIT_BYTES,
 	} units = UNIT_SECTORS;
 
-	if (argc == 1) {
-	}
-
 	/* If arguments are given, use the specified device/offset */
 	while ((c = getopt_long(argc, argv, short_opts, long_opts, NULL)) != -1) {
 		switch (c) {
