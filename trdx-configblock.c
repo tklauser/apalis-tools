@@ -1,11 +1,12 @@
 /*
  * Read/write the Toradex configuration block from eMMC
  *
- * Copyright (C) 2015 Tobias Klauser <tklauser@distanz.ch>
+ * Copyright (C) 2018 Tobias Klauser <tklauser@distanz.ch>
  *
- * Based on u-boot Toradex BSP which is:
+ * Based on board/toradex/common/tdx-config-block.c from the Toradex u-boot
+ * which is:
  *
- * Copyright (c) 2011-2015 Toradex, Inc.
+ * Copyright (c) 2016 Toradex, Inc.
  *
  * License: GNU General Public License, version 2
  */
@@ -61,7 +62,7 @@ struct toradex_eth_addr {
 } __packed;
 
 static const char* const toradex_modules[] = {
-	 [0] = "invalid",
+	 [0] = "unknown module",
 	 [1] = "Colibri PXA270 312MHz",
 	 [2] = "Colibri PXA270 520MHz",
 	 [3] = "Colibri PXA320 806MHz",
@@ -79,6 +80,8 @@ static const char* const toradex_modules[] = {
 	[15] = "Colibri iMX6 DualLite 512MB",
 	[16] = "Colibri iMX6 Solo 256MB IT",
 	[17] = "Colibri iMX6 DualLite 512MB IT",
+	[18] = "unknown module",
+	[19] = "unknown module",
 	[20] = "Colibri T20 256MB",
 	[21] = "Colibri T20 512MB",
 	[22] = "Colibri T20 512MB IT",
@@ -91,6 +94,17 @@ static const char* const toradex_modules[] = {
 	[29] = "Apalis iMX6 Dual 512MB",
 	[30] = "Colibri T30 1GB IT",
 	[31] = "Apalis T30 1GB IT",
+	[32] = "Colibri iMX7 Solo 256MB",
+	[33] = "Colibri iMX7 Dual 512MB",
+	[34] = "Apalis TK1 2GB",
+	[35] = "Apalis iMX6 Dual 1GB IT",
+	[36] = "Colibri iMX6ULL 256MB",
+	[37] = "Apalis iMX8 QuadMax 4GB Wi-Fi / Bluetooth",
+	[38] = "Colibri iMX8X",
+	[39] = "Colibri iMX7 Dual 1GB (eMMC)",
+	[40] = "Colibri iMX6ULL 512MB Wi-Fi / Bluetooth IT",
+	[41] = "Colibri iMX7 Dual 512MB EPDC",
+	[42] = "Apalis TK1 4GB",
 };
 
 static const char *short_opts = "s:h";
