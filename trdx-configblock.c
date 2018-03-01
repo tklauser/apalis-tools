@@ -167,7 +167,7 @@ static int read_config_block(const char *devfile, off64_t skip)
 	ret = 0;
 
 	tag = (struct toradex_tag *) config_block;
-	if (tag->flags != TAG_FLAG_VALID && tag->id != TAG_VALID) {
+	if (tag->flags != TAG_FLAG_VALID || tag->id != TAG_VALID) {
 		warn("No valid Toradex config block found on %s at 0x%08jx\n",
 		     devfile, (intmax_t) pos);
 		goto out;
