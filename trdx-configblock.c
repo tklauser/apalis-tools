@@ -126,11 +126,11 @@ static void usage_and_exit(int ret)
 	exit(ret);
 }
 
-static int read_config_block(const char *devfile, off_t skip)
+static int read_config_block(const char *devfile, off64_t skip)
 {
 	int fd, ret = -1;
 	size_t read_size, len;
-	off_t tag_off = 0, pos;
+	off64_t tag_off = 0, pos;
 	uint8_t *config_block = NULL;
 	uint32_t serial = 0;
 	struct toradex_tag *tag;
@@ -222,7 +222,7 @@ out:
 int main(int argc, char **argv)
 {
 	int c, ret;
-	off_t skip = DEFAULT_ARG_PART_OFF;
+	off64_t skip = DEFAULT_ARG_PART_OFF;
 	bool skip_set = false;
 	char *devfile = NULL;
 	enum {
